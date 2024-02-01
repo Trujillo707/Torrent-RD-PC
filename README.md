@@ -7,8 +7,10 @@ Download Torrent-RD-PC.exe from the release page and follow step 2 and onwards i
 
 # Build Instructions
 1. Compile it somewhere to your PC, just make sure it can read/write to that directory.
-If using g++, make sure to use the -municode flag or else it will not compile.
-2. Create settings.txt and replace "string" with the real values you want. The outdir should not be surrounded with quotes. Do `C:\foobar`, not `"C:\foobar"`.
+If manually using g++ on the `main.cpp`, make sure to use the `-municode` flag or else it will not compile.
+Otherwise, hopefully the CMake project will properly include the flag for you. Realistically, it is likely more efficient to only work on the `main.cpp`
+using a simple text editor instead of using this CMake project. I use CLion, so the bloat is there by default and I have yet to remove it.
+3. Create settings.txt and replace "string" with the real values you want. The outdir should not be surrounded with quotes. Do `C:\foobar`, not `"C:\foobar"`.
 
   Example `settings.txt`:
   ```
