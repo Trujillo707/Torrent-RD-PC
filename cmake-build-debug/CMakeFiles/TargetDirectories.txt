@@ -1,0 +1,3 @@
+C:/Users/orlan/CLionProjects/Torrent-RD-PC/cmake-build-debug/CMakeFiles/Torrent_RD_PC.dir
+C:/Users/orlan/CLionProjects/Torrent-RD-PC/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/orlan/CLionProjects/Torrent-RD-PC/cmake-build-debug/CMakeFiles/rebuild_cache.dir
