@@ -1,4 +1,4 @@
-# Torrent-RD-PC
+# Torrent-RD-PC (WIP)
 
 Basically what the description says. Open some torrent file via command line argument, then it will download it somewhere on your PC.
 
