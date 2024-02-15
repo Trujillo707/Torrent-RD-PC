@@ -32,6 +32,9 @@ If not, please install cURL.cURL from WinGet (recommended) or go to https://curl
 You can also drag and drop files on the executable!
 This program should work with any software that can properly pass file directories as the only argument.
 
+# TODO:
+* Properly handle folder structures, current implementation only accounts for compressed archives or singular unarchived files
+
 # This software is free to use, modify, and hopefully improve.
 # The author is not responsible for any misuse of said software.
 # This tool should only be used to download torrents that the user has the legal right to download.
