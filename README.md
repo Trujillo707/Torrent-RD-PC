@@ -14,21 +14,24 @@ Download Torrent-RD-PC.exe from the release page and follow step 2 and onwards i
 
 # Build Instructions
 1. Compile it somewhere to your PC, just make sure it can read/write to that directory.
-If manually using g++ on the `main.cpp`, make sure to use the `-municode` flag or else it will not compile.
-Otherwise, hopefully the CMake project will properly include the flag for you. Realistically, it is likely more efficient to only work on the `main.cpp`
+If manually using g++, make sure to use the `-municode` flag or else it will not compile.
+Otherwise, hopefully the CMake project will properly include the flag for you. Realistically, it is likely more efficient to only work on the `.cpp` files.
 using a simple text editor instead of using this CMake project. I use CLion, so the bloat is there by default and I have yet to remove it.
 I am aware that it is a rather inefficient implementation, but the real runtime bottleneck is the user's internet connection so any code-runtime savings are insignificant.
-3. Create settings.txt and replace "string" with the real values you want. The outdir should not be surrounded with quotes. Do `C:\foobar`, not `"C:\foobar"`.
+The RdFile class realistically does not need to exist, but a little bit of OOP doesn't hurt. Even if it's unwarranted. 
+3. Create settings.txt and replace `string` with the real values you want. The `outdir` should not be surrounded with quotes. Do `C:\foobar`, not `"C:\foobar"`.
 
   Example `settings.txt`:
   ```
   token=string
   outdir=string
    ```
-3. Make sure to save settings.txt to the same directory as the executable.
-4. Make sure to have a copy of cURL accessible from your PATH.
+3. Make sure to save `settings.txt` to the same directory as the executable.
+
+   **Alternative:** Pass the PATH location of your `settings.txt` as the second command line argument right after the `.torrent` PATH.
+5. Make sure to have a copy of cURL accessible from your PATH.
 If not, please install cURL.cURL from WinGet (recommended) or go to https://curl.se/download.html.
-5. Run the executable with the .torrent file directory as a command line argument, and you're golden. 
+6. Run the executable with the `.torrent` file directory as the first command line argument, and you're golden. 
 You can also drag and drop files on the executable!
 This program should work with any software that can properly pass file directories as the only argument.
 
