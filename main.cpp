@@ -29,14 +29,21 @@ SOFTWARE.*/
 #include <algorithm>
 #include <cwchar>
 #include <Windows.h>
+#include <random>
 
 #include <fcntl.h>
 #include <io.h>
 #include <stdio.h> // NOLINT(*-deprecated-headers)
+#include "RdFile.h"
 
 int wmain(int argc, wchar_t* argv[])
 {
+    // Some important stuff
+    std::vector<std::shared_ptr<RdFile>> theFiles;
+
+
     _setmode(_fileno(stdout), _O_U16TEXT); // Bless this guy for his help https://giodicanio.com/2023/06/01/how-to-print-unicode-text-to-the-windows-console-in-c-plus-plus/
+    std::random_device rd;
 
     // Common sense
     if (argv[1] == nullptr) {
@@ -49,11 +56,18 @@ int wmain(int argc, wchar_t* argv[])
     std::wstring torrentFilePath = argv[1];
     std::wstring currentdir = argv[0];
     currentdir = currentdir.substr(0, currentdir.find_last_of('\\'));
-    //std::filesystem::path currentPath = currentdir;
+
 
     // Read settings from file, user is responsible for making it
-    std::filesystem::path settingsFile(currentdir + L"\\settings.txt");
-    std::wstring curlfilename = L"curlOutput" + std::to_wstring(std::time(0)) + L".txt"; // NOLINT(*-use-nullptr)
+    std::filesystem::path settingsFile;
+    if (argv[2] == nullptr){
+        settingsFile= (currentdir + L"\\settings.txt");
+    }
+    else{
+        settingsFile = argv[2];
+    }
+
+    std::wstring curlfilename = L"curlOutput" + std::to_wstring(rd()) + L".txt"; // NOLINT(*-use-nullptr)
     std::filesystem::path curlOutput(currentdir + L"\\" + curlfilename);
 
     std::wifstream ifs(settingsFile);
@@ -158,25 +172,24 @@ int wmain(int argc, wchar_t* argv[])
         _wsystem(L"pause");
         return 0;
     }
-    std::wstring restrictedLink;
-    std::wstring temp;
-    std::wstring torrentProgress;
-    int sleepTime = 2;
-    while (std::getline(ifs, temp)) { // traverse file
-        if (temp.find(L"progress") != std::wstring::npos) { // get progress
-            torrentProgress = temp;
-        }
 
-        if (temp.find(L"links") != std::wstring::npos) { // find download section
-            std::getline(ifs, temp); // get download line
-            if (temp.find(L"real-debrid.com") == std::wstring::npos) { // if no valid link, attempt to recheck for it
+    std::wstring filePath;
+    std::wstring temp;
+    int sleepTime = 2;
+
+    while (std::getline(ifs, temp)){ // stop the looping if the links are ready
+        if (temp.find(L"\"progress\":") != std::wstring::npos){
+            if (temp.find(L"100") != std::wstring::npos){
+                std::wcout << L"Download links are ready..." << std::endl << std::endl;
+                break;
+            }
+            else{
                 ifs.close();
                 std::filesystem::remove(curlOutput);
-                std::wcout << L"No download link found! Attempting to wait " + std::to_wstring(sleepTime * 2) + L" seconds and will try again..." << std::endl;
-                std::wcout << torrentProgress << std::endl;
+                std::wcout << L"Torrent download to servers is not done -> "<< temp << L"\nAttempting to wait " + std::to_wstring(sleepTime * 2) + L" seconds and will try again..." << std::endl;
                 Sleep(sleepTime * 2000);
                 curlCommand = L"curl.exe -X GET -H \"Authorization: Bearer " + token + L"\" "
-                              + L"\"https://api.real-debrid.com/rest/1.0/torrents/info/" + torrentID + L"\" -o " + curlOutput.wstring() + L" --create-dirs --no-progress-meter";
+                              + L"\"https://api.real-debrid.com/rest/1.0/torrents/info/" + torrentID + L"\" -o " + curlOutput.wstring() + L" --create-dirs --no-progress-meter";// NOLINT(*-inefficient-string-concatenation)
                 _wsystem(curlCommand.c_str());
                 std::wcout << std::endl;
                 ifs.open(curlOutput);
@@ -187,79 +200,87 @@ int wmain(int argc, wchar_t* argv[])
                 }
                 sleepTime ++;
             }
-            else{
-                break;
-            }
         }
     }
-    std::erase(temp, ' '); // dunno if this does anything, not going to touch it tbh
-    std::erase(temp, '\\');
-    std::erase(temp, '"');
-    for (int i = temp.size() - 1; i >= 0; i--) {
-        if (isspace(temp[i])) {
+
+    //std::wcout << L"Saving filename(s)..." << std::endl << std::endl; //debug
+
+    while (std::getline(ifs, temp)){ // save the links into the correct RdFile
+        if (temp.find(L"links") != std::wstring::npos){
+            //std::wcout << L"End of filename(s)..." << std::endl << std::endl; // debug
             break;
         }
-        restrictedLink.push_back(temp[i]);
-
+        auto currIndex = temp.find(L"\"path\":"); // pardon the auto, it works though
+        if (currIndex != std::wstring::npos){
+            filePath = temp.substr(currIndex + 7, temp.size()); // currIndex is start of "path:", so jump 7
+            filePath.pop_back(); // delete that final comma since its currently: "foobar",
+            std::erase(filePath, '\\');
+            theFiles.push_back(std::make_shared<RdFile>(filePath));
+            //std::wcout << L"Saved filename: " << filePath <<  std::endl; //for debug
+        }
     }
-    std::reverse(restrictedLink.begin(), restrictedLink.end()); // clean link
+
+    int index = 0;
+    while (std::getline(ifs, temp)) { // traverse file
+        if (temp.find(L"],") != std::wstring::npos){ // stop once we reach end of the list of links
+            break;
+        }
+        std::wstring restrictedLink;
+        for (int i = 0; i < temp.length(); i++) {
+            if (isspace(temp[i]) || temp[i] == '\\' || temp[i] == ',') {
+                continue;
+            }
+            restrictedLink.push_back(temp[i]);
+        }
+        theFiles.at(index)->rawLink = restrictedLink; // yeah, the names are annoying
+        index++;
+    }
 
     // Unrestrict the link
     ifs.close();
     std::filesystem::remove(curlOutput);
-    std::wcout << L"Unrestricting " + restrictedLink << std::endl;
-    curlCommand = L"curl.exe -X POST --data \"link=" + restrictedLink + L"\" -H \"Authorization: Bearer "
-                  + token + L"\" \"https://api.real-debrid.com/rest/1.0/unrestrict/link\" -o " + curlOutput.wstring() + L" --create-dirs --no-progress-meter";
-    _wsystem(curlCommand.c_str());
-    std::wcout << std::endl;
 
-    // Get direct link to media file (Please ensure you have the legal permission to download :P)
-    ifs.open(curlOutput);
-    if (!ifs.is_open()) {
-        std::wcout << L"ERROR: Could not open " + curlOutput.wstring() << std::endl;
-        _wsystem(L"pause");
-        return 0;
-    }
-    std::wstring downloadLink;
-    temp.clear();
-    while (std::getline(ifs, temp)) {
-        if (temp.find(L"download") != std::wstring::npos) {
-            downloadLink = temp;
-            break;
+    for (int i = 0; i < theFiles.size(); i++) {
+        auto current = theFiles.at(i);
+        //std::wcout << L"Unrestricting " + current->rawLink << std::endl;
+        curlCommand = L"curl.exe -X POST --data \"link=" + current->rawLink + L"\" -H \"Authorization: Bearer "
+                      + token + L"\" \"https://api.real-debrid.com/rest/1.0/unrestrict/link\" -o " + curlOutput.wstring() + L" --create-dirs --no-progress-meter";
+        _wsystem(curlCommand.c_str());
+        std::wcout << std::endl;
+
+        // Get direct link to media file (Please ensure you have the legal permission to download :P)
+        ifs.open(curlOutput);
+        if (!ifs.is_open()) {
+            std::wcout << L"ERROR: Could not open " + curlOutput.wstring() << std::endl;
+            _wsystem(L"pause");
+            return 0;
         }
-    }
-    downloadLink.pop_back();
-    int toDelete = downloadLink.find(L':') + 2;
-    downloadLink.erase(0, toDelete);
-    std::erase(downloadLink, '\\');
+        std::wstring downloadLink;
+        temp.clear();
+        while (std::getline(ifs, temp)) {
+            if (temp.find(L"download") != std::wstring::npos) {
+                downloadLink = temp;
+                break;
+            }
+        }
+        downloadLink.pop_back();
+        int toDelete = downloadLink.find(L':') + 2;
+        downloadLink.erase(0, toDelete);
+        std::erase(downloadLink, '\\');
+        current->decodedLink = downloadLink;
 
-    // Grab filename since curl refuses to decode the urls
-    std::filesystem::path tempPath = torrentFilePath;
-    std::wstring fileName = tempPath.filename().wstring();
-    if (fileName.find(L".torrent") != std::wstring::npos) {
-        fileName = fileName.substr(0, fileName.find_last_of('.'));
-    }
-
-    tempPath = fileName; // meh, it works
-
-    // Enforce that it has the right file extension in case it is missing
-    std::wstring junkDownloadLink = downloadLink.substr(downloadLink.find_last_of('/'));
-    junkDownloadLink.pop_back(); // links have the quotes at the end
-    std::filesystem::path downloadLinkAsPath = junkDownloadLink;
-    if (tempPath.extension() != downloadLinkAsPath.extension()){
-        fileName.append(downloadLinkAsPath.extension().wstring());
+        ifs.close();
+        std::filesystem::remove(curlOutput);
     }
 
-    // IGNORE: for debug
-    //std::wcout << L"Download link extension; fileName extension; new fileName " +  downloadLinkAsPath.extension().wstring() + L" "  + tempPath.extension().wstring() + fileName << std::endl;
-    //_wsystem(L"pause");
-
-    // Download the file!
-    std::wcout << L"Downloading " + downloadLink << std::endl; // Yeah, the link is raw, so what?
-    std::wcout << std::endl;
-    curlCommand = L"curl.exe " + downloadLink + L" -o \"" + fileName + L"\" --output-dir " + outdir + L" --create-dirs";
-    _wsystem(curlCommand.c_str());
-    std::wcout << std::endl;
+    for (const auto &curr: theFiles) {
+        // Download the file!
+        std::wcout << L"Downloading " + curr->decodedLink << std::endl; // Yeah, the link is raw, so what?
+        std::wcout << std::endl;
+        curlCommand = L"curl.exe " + curr->decodedLink + L" -o " + curr->thePath + L" --output-dir " + outdir + L" --create-dirs";
+        _wsystem(curlCommand.c_str());
+        std::wcout << std::endl;
+    }
 
     // Cleanup
     ifs.close();

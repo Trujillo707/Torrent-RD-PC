@@ -55,6 +55,12 @@ build CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj: CXX_COMPILER__Torrent_RD_PC_uns
   OBJECT_DIR = CMakeFiles\Torrent_RD_PC.dir
   OBJECT_FILE_DIR = CMakeFiles\Torrent_RD_PC.dir
 
+build CMakeFiles/Torrent_RD_PC.dir/RdFile.cpp.obj: CXX_COMPILER__Torrent_RD_PC_unscanned_Release C$:/Users/orlan/CLionProjects/Torrent-RD-PC/RdFile.cpp || cmake_object_order_depends_target_Torrent_RD_PC
+  DEP_FILE = CMakeFiles\Torrent_RD_PC.dir\RdFile.cpp.obj.d
+  FLAGS = -municode -O3 -DNDEBUG -std=gnu++20 -fdiagnostics-color=always
+  OBJECT_DIR = CMakeFiles\Torrent_RD_PC.dir
+  OBJECT_FILE_DIR = CMakeFiles\Torrent_RD_PC.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target Torrent_RD_PC
@@ -63,7 +69,7 @@ build CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj: CXX_COMPILER__Torrent_RD_PC_uns
 #############################################
 # Link the executable Torrent_RD_PC.exe
 
-build Torrent_RD_PC.exe: CXX_EXECUTABLE_LINKER__Torrent_RD_PC_Release CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj
+build Torrent_RD_PC.exe: CXX_EXECUTABLE_LINKER__Torrent_RD_PC_Release CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj CMakeFiles/Torrent_RD_PC.dir/RdFile.cpp.obj
   FLAGS = -municode -O3 -DNDEBUG
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\Torrent_RD_PC.dir

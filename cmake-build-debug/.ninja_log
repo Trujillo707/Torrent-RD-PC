@@ -1,4 +1,21 @@
 # ninja log v5
-1	239	7284722099884955	build.ninja	55f04b13f0b1e4d7
+1	239	7299315588672508	build.ninja	55f04b13f0b1e4d7
 1753	1869	7284708522821511	Torrent_RD_PC.exe	b86227f775cd67b7
 3	1752	7284708521654830	CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj	2ecad31e7cf19c8d
+7	385	7299432957390976	CMakeFiles/Torrent_RD_PC.dir/RdFile.cpp.obj	e1b4b326099d1a5
+3	2014	7299432973634673	CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj	2ecad31e7cf19c8d
+2014	2148	7299432974979681	Torrent_RD_PC.exe	fa8fbd9d1786ab71
+4	2363	7299438485345104	CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj	2ecad31e7cf19c8d
+2363	2505	7299438486736216	Torrent_RD_PC.exe	fa8fbd9d1786ab71
+3	2025	7299442772978218	CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj	2ecad31e7cf19c8d
+2025	2156	7299442774293741	Torrent_RD_PC.exe	fa8fbd9d1786ab71
+4	2115	7299460269911421	CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj	2ecad31e7cf19c8d
+2116	2245	7299460271227383	Torrent_RD_PC.exe	fa8fbd9d1786ab71
+3	2004	7299468654426716	CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj	2ecad31e7cf19c8d
+2004	2128	7299468655672580	Torrent_RD_PC.exe	fa8fbd9d1786ab71
+3	2037	7299471735604648	CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj	2ecad31e7cf19c8d
+2037	2165	7299471736870625	Torrent_RD_PC.exe	fa8fbd9d1786ab71
+3	2586	7299486407412201	CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj	2ecad31e7cf19c8d
+2586	2771	7299486409273636	Torrent_RD_PC.exe	fa8fbd9d1786ab71
+3	2057	7299487049997142	CMakeFiles/Torrent_RD_PC.dir/main.cpp.obj	2ecad31e7cf19c8d
+2058	2191	7299487051318662	Torrent_RD_PC.exe	fa8fbd9d1786ab71
