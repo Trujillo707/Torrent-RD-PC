@@ -275,7 +275,7 @@ int wmain(int argc, wchar_t* argv[])
 
     for (const auto &curr: theFiles) {
         // Download the file!
-        std::wcout << L"Downloading " + curr->decodedLink << std::endl; // Yeah, the link is raw, so what?
+        std::wcout << L"Downloading " + curr->thePath << std::endl; // Yeah, the link is raw, so what?
         std::wcout << std::endl;
         curlCommand = L"curl.exe " + curr->decodedLink + L" -o " + curr->thePath + L" --output-dir " + outdir + L" --create-dirs";
         _wsystem(curlCommand.c_str());
