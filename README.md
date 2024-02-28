@@ -1,12 +1,12 @@
 # Torrent-RD-PC
 
-Basically what the description says. Open some torrent file via command line argument, then it will download it somewhere on your PC.
+Basically what the description says. Open some torrent file via command line argument, then it will download it somewhere on your PC. I am aware that the implementation can use a fair amount of refactoring. It will be done in due time, but current readability and performance is satisfactory. 
 
 # How to use the executable
 Download Torrent-RD-PC.exe from the release page and follow step 2 and onwards in the [Build Instructions](#Build-Instructions) section.
 
 # Requirements
-* cURL
+* curl
 * A relatively modern copy of a C++ compiler that supports C++20 if you wish to compile source code (I use std::erase from C++20)
 * A Windows computer (feel free to port this to Linux if you want)
 * Real-Debrid Premium account
