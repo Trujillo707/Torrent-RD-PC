@@ -34,7 +34,37 @@ SOFTWARE.*/
 #include <fcntl.h>
 #include <io.h>
 #include <stdio.h> // NOLINT(*-deprecated-headers)
+#include <map>
 #include "RdFile.h"
+
+static std::map<wchar_t, unsigned char>  hexDigits = {{'0',0x00},{'1',0x01},{'2',0x02},{'3',0x03},
+                                                      {'4',0x04},{'5',0x05},{'6',0x06},{'7',0x07},
+                                                      {'8',0x08},{'9',0x09},{'a',0x0a},{'b',0x0b},
+                                                      {'c',0x0c},{'d',0x0d},{'e',0x0e},{'f',0x0f}};
+
+wchar_t uniToWchar(std::wstring toParse){
+    wchar_t result;
+    short theHex = 0x0000;
+    if (toParse.length() != 4){
+        return '0';
+    }
+    for (int i = 0; i < 4; i++) {
+        theHex = theHex | hexDigits[toParse[i]];
+        if (i < 3){
+            theHex = theHex << 4;
+        }
+    }
+    result = (wchar_t) theHex;
+    return result;
+}
+
+void decodeUni(std::wstring& toParse){
+    for (int i = 0; i < toParse.length(); i++) {
+        if(toParse.substr(i,2) == L"\\u"){
+            toParse.replace(i,6, 1, uniToWchar(toParse.substr(i+2,4)));
+        }
+    }
+}
 
 int wmain(int argc, wchar_t* argv[])
 {
@@ -239,6 +269,45 @@ int wmain(int argc, wchar_t* argv[])
     // Unrestrict the link
     ifs.close();
     std::filesystem::remove(curlOutput);
+
+    // Edge Case: Multiple file paths reported, but only one download link available. Treat as an archive
+    if (theFiles.size() > 1 && theFiles.at(1)->rawLink.empty()){
+        std::wcout << L"Multiple file paths reported, yet only one undecoded link...\nTreating as an archive" << std::endl;
+        curlCommand = L"curl.exe -X POST --data \"link=" + theFiles.at(0)->rawLink + L"\" -H \"Authorization: Bearer "
+                      + token + L"\" \"https://api.real-debrid.com/rest/1.0/unrestrict/link\" -o " + curlOutput.wstring() + L" --create-dirs --no-progress-meter";
+        _wsystem(curlCommand.c_str());
+        std::wcout << std::endl;
+
+        ifs.open(curlOutput);
+        if (!ifs.is_open()) {
+            std::wcout << L"ERROR: Could not open " + curlOutput.wstring() << std::endl;
+            _wsystem(L"pause");
+            return 0;
+        }
+
+        std::wstring archiveName;
+        std::wstring tempString;
+        while (std::getline(ifs, tempString)) {
+            if (tempString.find(L"filename") != std::wstring::npos) {
+                archiveName= tempString;
+                break;
+            }
+        }
+
+        archiveName.pop_back();
+        auto toDelete = archiveName.find(L':') + 2;
+        archiveName.erase(0, toDelete);
+
+        decodeUni(archiveName);
+
+        theFiles.at(0)->thePath = archiveName;
+        std::wcout<< theFiles.at(0)->thePath << std::endl << std::endl;
+
+        theFiles.resize(1);
+
+        ifs.close();
+        std::filesystem::remove(curlOutput);
+    }
 
     for (int i = 0; i < theFiles.size(); i++) {
         auto current = theFiles.at(i);
