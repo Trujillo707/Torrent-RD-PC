@@ -244,6 +244,7 @@ int wmain(int argc, wchar_t* argv[])
         if (currIndex != std::wstring::npos){
             filePath = temp.substr(currIndex + 7, temp.size()); // currIndex is start of "path:", so jump 7
             filePath.pop_back(); // delete that final comma since its currently: "foobar",
+            decodeUni(filePath);
             std::erase(filePath, '\\');
             theFiles.push_back(std::make_shared<RdFile>(filePath));
             //std::wcout << L"Saved filename: " << filePath <<  std::endl; //for debug
