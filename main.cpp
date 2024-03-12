@@ -203,37 +203,80 @@ int wmain(int argc, wchar_t* argv[])
         return 0;
     }
 
+
+    std::wstring rootDownloadFolder; // In future refactoring put this in an easier to find place (aka the top likely)
     std::wstring filePath;
     std::wstring temp;
-    int sleepTime = 2;
+    int sleepTime = 1;
+    std::wstring lastProg;
+    // before this check for the download "filename". Use this for multi-file non-archives as the name for the master folder all files end up in irregardless of lower
+    while (std::getline(ifs, temp)){
+        auto theIndex = temp.find(L"\"filename\":");
+        if (theIndex != std::wstring::npos){
+            rootDownloadFolder = temp.substr(theIndex + 13, temp.size());
+            rootDownloadFolder.pop_back();
+            rootDownloadFolder.pop_back(); // works well enough
+            decodeUni(rootDownloadFolder);
+            break;
+        }
+    }
 
     while (std::getline(ifs, temp)){ // stop the looping if the links are ready
         if (temp.find(L"\"progress\":") != std::wstring::npos){
             if (temp.find(L"100") != std::wstring::npos){
-                std::wcout << L"Download links are ready..." << std::endl << std::endl;
+                std::wcout << std::endl << L"Torrent is complete..." << std::endl << std::endl;
                 break;
             }
             else{
                 ifs.close();
                 std::filesystem::remove(curlOutput);
-                std::wcout << L"Torrent download to servers is not done -> "<< temp << L"\nAttempting to wait " + std::to_wstring(sleepTime * 2) + L" seconds and will try again..." << std::endl;
+                sleepTime = (temp == lastProg) ? sleepTime + 1 : 1; // Seems like a reasonable use of time
+                std::wcout << std::flush << L"Torrent download to servers is not done. Please wait... -> "<< temp << L"    \r" << std::flush;
                 Sleep(sleepTime * 2000);
                 curlCommand = L"curl.exe -X GET -H \"Authorization: Bearer " + token + L"\" "
                               + L"\"https://api.real-debrid.com/rest/1.0/torrents/info/" + torrentID + L"\" -o " + curlOutput.wstring() + L" --create-dirs --no-progress-meter";// NOLINT(*-inefficient-string-concatenation)
                 _wsystem(curlCommand.c_str());
-                std::wcout << std::endl;
                 ifs.open(curlOutput);
                 if (!ifs.is_open()) {
                     std::wcout << L"ERROR: Could not open " + curlOutput.wstring() << std::endl;
                     _wsystem(L"pause");
-                    return 0;
+                    return 1;
                 }
-                sleepTime ++;
+
+            }
+            lastProg = temp;
+        }
+    }
+
+    // check if the downloaded torrent is still being uploaded
+    // TODO: eliminate code redundancy and make this and previous while block a function of sorts
+    sleepTime = 0;
+    while (std::getline(ifs, temp)){
+        if (temp.find(L"\"status\":") != std::wstring::npos){
+            if (temp.find(L"downloaded") != std::wstring::npos){
+                std::wcout << std::endl << L"Download links are ready..." << std::endl << std::endl;
+                break;
+            }
+            else{
+                ifs.close();
+                std::filesystem::remove(curlOutput);
+                std::wcout << L"Torrent upload to servers is not done. Please wait briefly...\r" << std::flush;
+                Sleep(sleepTime * 1000);
+                curlCommand = L"curl.exe -X GET -H \"Authorization: Bearer " + token + L"\" "
+                              + L"\"https://api.real-debrid.com/rest/1.0/torrents/info/" + torrentID + L"\" -o " + curlOutput.wstring() + L" --create-dirs --no-progress-meter";// NOLINT(*-inefficient-string-concatenation)
+                _wsystem(curlCommand.c_str());
+                ifs.open(curlOutput);
+                if (!ifs.is_open()) {
+                    std::wcout << L"ERROR: Could not open " + curlOutput.wstring() << std::endl;
+                    _wsystem(L"pause");
+                    return 1;
+                }
             }
         }
     }
 
-    //std::wcout << L"Saving filename(s)..." << std::endl << std::endl; //debug
+
+        //std::wcout << L"Saving filename(s)..." << std::endl << std::endl; //debug
 
     while (std::getline(ifs, temp)){ // save the links into the correct RdFile
         if (temp.find(L"links") != std::wstring::npos){
@@ -277,7 +320,7 @@ int wmain(int argc, wchar_t* argv[])
         curlCommand = L"curl.exe -X POST --data \"link=" + theFiles.at(0)->rawLink + L"\" -H \"Authorization: Bearer "
                       + token + L"\" \"https://api.real-debrid.com/rest/1.0/unrestrict/link\" -o " + curlOutput.wstring() + L" --create-dirs --no-progress-meter";
         _wsystem(curlCommand.c_str());
-        std::wcout << std::endl;
+        std::wcout << std::flush;
 
         ifs.open(curlOutput);
         if (!ifs.is_open()) {
@@ -309,6 +352,13 @@ int wmain(int argc, wchar_t* argv[])
         ifs.close();
         std::filesystem::remove(curlOutput);
     }
+    else if(theFiles.size() > 1){ // put all downloads in some main root directory
+        for (int i = 0; i < theFiles.size(); i++){
+            auto current = theFiles.at(i);
+            // not too sure why my substr needs to start at 2 but it works
+            current->thePath = L"\"/" + rootDownloadFolder + current->thePath.substr(2,current->thePath.size());
+        }
+    }
 
     for (int i = 0; i < theFiles.size(); i++) {
         auto current = theFiles.at(i);
@@ -316,7 +366,7 @@ int wmain(int argc, wchar_t* argv[])
         curlCommand = L"curl.exe -X POST --data \"link=" + current->rawLink + L"\" -H \"Authorization: Bearer "
                       + token + L"\" \"https://api.real-debrid.com/rest/1.0/unrestrict/link\" -o " + curlOutput.wstring() + L" --create-dirs --no-progress-meter";
         _wsystem(curlCommand.c_str());
-        std::wcout << std::endl;
+        std::wcout << std::flush;
 
         // Get direct link to media file (Please ensure you have the legal permission to download :P)
         ifs.open(curlOutput);
